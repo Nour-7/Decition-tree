@@ -1,11 +1,9 @@
 import pylab
-import numpy
+import numpy as np
 
-x = numpy.linspace(0, 200)  # 100 linearly spaced numbers
-y = numpy.sin(x)/x  # computing the values of sin(x)/x
-s = 1/(1 + (128/x)**100)
-# compose plot
-pylab.plot(x, s)  # sin(x)/x
-# pylab.plot(x, y, 'co')  # same function with cyan dots
-# pylab.plot(x, 2*y, x, 3*y)  # 2*sin(x)/x and 3*sin(x)/x
-pylab.show()  # show the plot
+a = [[1, 2, 3],
+     [4, 3, 1],
+     [1, 2, 3]]
+unique_elements, counts_elements = np.unique(a, axis=0, return_counts=True)
+print(unique_elements)
+print(counts_elements)

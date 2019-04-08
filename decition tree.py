@@ -7,13 +7,10 @@ class Node:
         self.edges = [""] * no_children
         self.children = [None] * no_children
 
-    def add_node(self, node, edge, index):
+    def add_node(self, node, edge = 0, index = 0):
         self.edges[index] = edge
         self.children[index] = node
 
-
-root = Node("root", 3)
-print(root.name)
 
 # print some values in the tree
 # print(root.data[0])
@@ -33,6 +30,7 @@ rec = [
 
 att = {"Weather": Weather, "Parents": Parents, "Money": Money}
 
+flag = [r[-1] for r in rec]
 
 def gini(a, rec):
     m = [np.zeros(len(Class)) for i in att[a]]
@@ -71,6 +69,22 @@ def gini2(a, re):
         reci[row].append(r)
         m[row][col] += 1
     si = np.sum(m, axis=1)
+    gi = [(1 - np.sum(m[i]**2 / si[i]**2)) if si[i] != 0 else 0  for i in range(len(si))]
+    s = np.sum(m, axis=0)
+    if(np.sum(s,axis=0) == 0):
+        return 0, []
+    g = 1 - sum([s[i]**2 / sum(s)**2 for i in range(len(s))])
+   # print(gi, reci)
+    R_Gain = np.sum(gi * si)/np.sum(m)
+    return R_Gain, reci
+
+
+def gini3(a, re):
+    m = []
+    reci = [[] for i in att[a]]
+    #for r in re:
+    unique_elements, counts_elements = np.unique([flag[i] for i in re ], return_counts=True)    
+    si = np.sum(m, axis=1)
     gi = [1 - np.sum(m[i]**2 / si[i]**2) for i in range(len(si))]
     s = np.sum(m, axis=0)
     if(np.sum(s) == 0):
@@ -96,23 +110,29 @@ def id3(att_list, rec_list):
         min = 100
         node = ()
         for i in att_list:
-          g, r = gini2(attribute[i], rec_list)
+          g, r = gini2(attribute[i], rec_list)   
+          print(attribute[i],r)
           if g < min:
                 min = g
                 node = (i, r)        
         a = attribute[node[0]]
+        #print(a)
+        # if(a == "Weather"):
+        #         print(node[1][0])
         root = Node(name = a, no_children = len(att[a]))
         att_list.remove(node[0])
         for i in range(len(att[a])):
                 u = set()
                 for j in node[1][i]:
                         u.add(rec[j][-1])
-                if(u == 1) : return Node(name = rec[rec_list[0]][-1])         
+                if(len(u) == 1) :
+                        root.add_node(Node(name = u.pop()),att[a][i], i)         
+                        continue
                 root.add_node(id3(att_list, node[1][i]),att[a][i], i)
         return root
 
 a_list = [0,1,2]
-r = [1,2,3,4,5,6,7,8,9]
+r = [0,1,2,3,4,5,6,7,8,9]
 root = id3(a_list, r)
 # print(root.name)
 # for i in root.children:
@@ -122,13 +142,19 @@ root = id3(a_list, r)
 
 def display_tree(root):
         print(root.name)
-        for i in root.children:
-                print(i.name, sep = ' ')
-                if(len(i.edges) != 0):
-                        print(i.edges[0])
-                        display_tree(i)
+        c = root.children
+        for i in range(len(c)):
+                print(root.edges[i])
+                if(len(c[i].edges) != 0):
+                      # print(c[i].edges[0])
+                        display_tree(c[i])
+                else:
+                        print(c[i].name)
+                
+               
 
 display_tree(root)
+
 #root = id3(att, rec)
 # g, r = gini2("Weather", [1, 2, 4, 5])
 # print(g)
