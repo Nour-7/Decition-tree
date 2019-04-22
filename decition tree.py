@@ -1,4 +1,10 @@
 import numpy as np
+import pydotplus
+from sklearn.datasets import load_iris
+from sklearn import tree
+import collections
+import matplotlib.pyplot as plt
+import PIL.Image
 
 
 class Node:
@@ -10,11 +16,6 @@ class Node:
     def add_node(self, node, edge = 0, index = 0):
         self.edges[index] = edge
         self.children[index] = node
-
-
-# print some values in the tree
-# print(root.data[0])
-# print(root.child[0].data[0])
 
 
 Weather = ["Sunny", "Windy", "Rainy"]
@@ -30,34 +31,7 @@ rec = [
 
 att = {"Weather": Weather, "Parents": Parents, "Money": Money}
 
-flag = [r[-1] for r in rec]
 
-def gini(a, rec):
-    m = [np.zeros(len(Class)) for i in att[a]]
-    reci = [[] for i in att[a]]
-    for r in rec:
-        row = att[a].index(r[attribute.index(a)])
-        col = Class.index(r[-1])
-        reci[row].append(r)
-        m[row][col] += 1
-    si = np.sum(m, axis=1)
-    gi = [1 - np.sum(m[i]**2 / si[i]**2) for i in range(len(si))]
-    s = np.sum(m, axis=0)
-    if(np.sum(s) == 0):
-        return 0, []
-    g = 1 - sum([s[i]**2 / sum(s)**2 for i in range(len(s))])
-   # print(gi, reci)
-    R_Gain = np.sum(gi * si)/np.sum(m)
-    return R_Gain, reci
-
-   # id = [[i for i in range(len(rec)) if j in rec[i]] for j in att[a]]
-
-#     s = [len([i for i in rec if a.union(j) <= i]) for j in Class]
-#     si = np.sum(s)
-#     s = (s / np.sum(s)) ** 2
-#     g = 1 - np.sum(s)
-#     # print(g, a.union(Class[1]))
-#     return g, si
 
 
 def gini2(a, re):
@@ -78,32 +52,6 @@ def gini2(a, re):
     R_Gain = np.sum(gi * si)/np.sum(m)
     return R_Gain, reci
 
-
-def gini3(a, re):
-    m = []
-    reci = [[] for i in att[a]]
-    #for r in re:
-    unique_elements, counts_elements = np.unique([flag[i] for i in re ], return_counts=True)    
-    si = np.sum(m, axis=1)
-    gi = [1 - np.sum(m[i]**2 / si[i]**2) for i in range(len(si))]
-    s = np.sum(m, axis=0)
-    if(np.sum(s) == 0):
-        return 0, []
-    g = 1 - sum([s[i]**2 / sum(s)**2 for i in range(len(s))])
-   # print(gi, reci)
-    R_Gain = np.sum(gi * si)/np.sum(m)
-    return R_Gain, reci
-
-
-# min = 100
-# node = ()
-# for i in attribute:
-#     g, r = gini(i, rec)
-#     if g < min:
-#         min = g
-#         node = (i, r)
-
-
 def id3(att_list, rec_list):
         if(len(att_list) == 0):
                return Node(name = rec[rec_list[0]][-1]) 
@@ -116,9 +64,6 @@ def id3(att_list, rec_list):
                 min = g
                 node = (i, r)        
         a = attribute[node[0]]
-        #print(a)
-        # if(a == "Weather"):
-        #         print(node[1][0])
         root = Node(name = a, no_children = len(att[a]))
         att_list.remove(node[0])
         for i in range(len(att[a])):
@@ -134,11 +79,6 @@ def id3(att_list, rec_list):
 a_list = [0,1,2]
 r = [0,1,2,3,4,5,6,7,8,9]
 root = id3(a_list, r)
-# print(root.name)
-# for i in root.children:
-#         print(i.name)
-#         if(len(i.edges) != 0):
-#                 print(i.edges[0])
 
 def display_tree(root):
         print(root.name)
@@ -151,11 +91,55 @@ def display_tree(root):
                 else:
                         print(c[i].name)
                 
-               
+def dot_node(root, index):
+    from_index = index[0]
+    dot_data = str(from_index) + " [label=\"" + root.name + "\", fillcolor=\"#ffa500\"];\n"
+    c = root.children
+    for i in range(len(c)):
+            index[0]+= 1
+            toindex = index[0]
+            if(len(c[i].edges) != 0):
+                    dot_data += dot_node(c[i], index)
+            else:
+                    dot_data = dot_data + str(index[0]) + " [label=\"" + c[i].name + "\", fillcolor=\"#40e0d0\"];\n"
+            dot_data = dot_data + str(from_index) + " -> " + str(toindex) + "[labeldistance=2,fontsize= 10, labelangle=45, headlabel=" +root.edges[i]+ "] ;\n"
+    return dot_data
+                
+def Plot_Tree(root):
+    dot_data = '''digraph Tree {
+            node [shape=ellipse, style="filled, rounded", color="black", fontname=helvetica] ;
+            edge [fontname=helvetica] ;\n'''
+    dot_data += dot_node(root, [0])
+    dot_data += "}"
+    graph = pydotplus.graph_from_dot_data(dot_data)
+    colors = ('turquoise', 'orange')
+    edges = collections.defaultdict(list)
 
+    for edge in graph.get_edge_list():
+        edges[edge.get_source()].append(int(edge.get_destination()))
+
+    for edge in edges:
+        edges[edge].sort()
+        for i in range(2):
+            dest = graph.get_node(str(edges[edge][i]))[0]
+    graph.write_png('tree.png')
+    img = PIL.Image.open(
+    r'tree.png')
+    img = np.asarray(img)
+    plt.imshow(img, cmap=plt.get_cmap('gray'))
+    plt.axis('off')
+    plt.show()
+
+
+
+def Classification(rec, root):
+        c = root
+        while(len(c.edges) != 0):
+                i = attribute.index(c.name)
+                j = att[c.name].index(rec[i])
+                c = c.children[j]
+        return c.name        
 display_tree(root)
-
-#root = id3(att, rec)
-# g, r = gini2("Weather", [1, 2, 4, 5])
-# print(g)
-# Gain("Weather", 10)
+Plot_Tree(root)
+print("Classification of the record ['Sunny', 'Yes', 'Rich'] is ")
+print(Classification(['Sunny', 'Yes', 'Rich'], root))
